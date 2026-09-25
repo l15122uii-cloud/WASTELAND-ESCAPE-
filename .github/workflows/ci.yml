@@ -12,19 +12,22 @@ jobs:
   gut-headless:
     runs-on: ubuntu-latest
     container:
-      image: abarichello/godot-ci:4.3   # Godot 4.3 官方 CI 镜像
+      image: barichello/godot-ci:4.3   # Godot 4.3 官方 CI 镜像（Docker Hub 命名空间为 barichello）
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install GUT 9.4.0 (Godot 4.3 compatible, MIT)
+      - name: Ensure GUT 9.4.0 present (vendored + fallback download)
         run: |
-          curl -fsSL https://github.com/bitwes/Gut/archive/refs/tags/v9.4.0.tar.gz -o /tmp/gut.tgz
-          mkdir -p /tmp/gut-src addons
-          tar -xzf /tmp/gut.tgz -C /tmp/gut-src
-          # 仓库解压后目录名为 Gut-9.4.0，addon 在 Gut-9.4.0/addons/gut
-          cp -r /tmp/gut-src/Gut-9.4.0/addons/gut addons/gut
-          echo "GUT installed:"; ls addons/gut | head
+          # addons/gut/ 已随仓库钉版 vendored（见 docs/engine-reference/godot/VERSION.md）。
+          # 仅在缺失时回退到下载，避免无条件网络依赖与版本漂移。
+          if [ ! -f addons/gut/gut.gd ]; then
+            curl -fsSL https://github.com/bitwes/Gut/archive/refs/tags/v9.4.0.tar.gz -o /tmp/gut.tgz
+            mkdir -p /tmp/gut-src addons
+            tar -xzf /tmp/gut.tgz -C /tmp/gut-src
+            cp -r /tmp/gut-src/Gut-9.4.0/addons/gut addons/gut
+          fi
+          echo "GUT resolved:"; ls addons/gut | head
 
       - name: Run GUT headless (S1–S12, hard gates S9/S10)
         run: |
@@ -32,14 +35,17 @@ jobs:
             -s addons/gut/gut_cmdln.gd \
             -gdir=res://tests \
             -ginclude_subdirs \
+            -gjunit_xml_file=test_results.xml \
             -gexit
         # -gexit 使测试失败时进程返回非 0 → CI 自动标红。
 
       - name: Upload GUT XML report (optional)
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: gut-report
           path: |
+            test_results.xml
             gut_*.xml
             .gutconfig.json
