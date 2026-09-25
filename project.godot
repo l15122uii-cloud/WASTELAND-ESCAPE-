@@ -1,0 +1,47 @@
+; Engine configuration file.
+; Godot 4.x project (WASTELAND ESCAPE / 废土逃生)
+; 注：Godot 4.x 具体小版本未钉（CONCERN C-B，缺 docs/engine-reference/<engine>/VERSION.md 与 CLAUDE.md）；
+;     config/features 暂标 "4.3"，待主理人补引擎参考文档后钉版，不影响架构红线。
+; 渲染：gl_compatibility / WebGL2（Web 唯一稳定后端，否则黑屏）—— architecture.md §0 / ADR-001。
+
+config_version=5
+
+[application]
+
+config/name="WASTELAND ESCAPE"
+config/description="2.5D 伪3D 三轨身后视角丧尸末日跑酷（Web/HTML5）"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+Tuning="*res://autoload/Tuning.gd"
+EventBus="*res://core/event_bus.gd"
+SaveManager="*res://autoload/save_manager.gd"
+AdManager="*res://autoload/ad_manager.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="viewport"
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+
+[physics]
+
+2d/solver/velocity_iterations=4
+2d/solver/position_iterations=2
+
+; ── Web / HTML5 export preset 占位（CONCERN C-B：完整导出模板路径需在编辑器/CI 补；本期不可跑） ──
+; 广告 SDK 仅作 HTML shell 外部 <script> 加载，不进 .pck（ADR-005 §1）。
+[preset.0]
+
+name="Web"
+platform="Web"
+export_path="build/wasteland-escape.html"
+export_filter="all_resources"

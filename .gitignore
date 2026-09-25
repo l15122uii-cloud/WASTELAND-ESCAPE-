@@ -1,0 +1,13 @@
+# WorkBuddy 项目数据（非游戏源码，不进 PR）
+.workbuddy/
+
+# Godot 导入缓存（随引擎版本再生）
+.godot/
+
+# Godot 导出构建产物
+build/
+
+# OS / 编辑器杂项
+.DS_Store
+Thumbs.db
+*.tmp
