@@ -1,0 +1,45 @@
+name: Sprint1 GUT Tests (headless)
+
+# 最终门控（C-A）：CI headless 跑 S1–S12，S9/S10 硬门禁红即拒。
+# 版本钉（C-B）：Godot 4.3 + GUT 9.4.0（见 docs/engine-reference/godot/VERSION.md）。
+
+on:
+  push:
+    branches: [main, fix/sprint1-vertical-slice]
+  pull_request:
+
+jobs:
+  gut-headless:
+    runs-on: ubuntu-latest
+    container:
+      image: abarichello/godot-ci:4.3   # Godot 4.3 官方 CI 镜像
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GUT 9.4.0 (Godot 4.3 compatible, MIT)
+        run: |
+          curl -fsSL https://github.com/bitwes/Gut/archive/refs/tags/v9.4.0.tar.gz -o /tmp/gut.tgz
+          mkdir -p /tmp/gut-src addons
+          tar -xzf /tmp/gut.tgz -C /tmp/gut-src
+          # 仓库解压后目录名为 Gut-9.4.0，addon 在 Gut-9.4.0/addons/gut
+          cp -r /tmp/gut-src/Gut-9.4.0/addons/gut addons/gut
+          echo "GUT installed:"; ls addons/gut | head
+
+      - name: Run GUT headless (S1–S12, hard gates S9/S10)
+        run: |
+          godot --headless --path . \
+            -s addons/gut/gut_cmdln.gd \
+            -gdir=res://tests \
+            -ginclude_subdirs \
+            -gexit
+        # -gexit 使测试失败时进程返回非 0 → CI 自动标红。
+
+      - name: Upload GUT XML report (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gut-report
+          path: |
+            gut_*.xml
+            .gutconfig.json
