@@ -54,7 +54,7 @@
 | **F4** pickup_spawner `var combo` 去类型 | `pickup_spawner.gd:19`；`:60` 调 `combo.on_pickup()` | ✅ |
 | **F5** `js.eval(code, false)` | `save_manager.gd:38` 第二参由 `""` 改为 `false`（bool 语义正确） | ✅ |
 | **F6** 过弯 `clear_lane(1)` | `game.gd:84` `obstacle_spawner.clear_lane(1)`；`obstacle_spawner.gd:97-100` 新增 `clear_lane(lane)` | ✅ |
-| **B3** 测试运行器 | `test_runner.tscn` 已建（GUT 节点）；⚠️ 但 `res://addons/gut/gut.gd` **仍不存在**（见 C-E，真阻塞项是 GUT addon 安装） | ⚠️ 部分 |
+| **B3** 测试运行器 | `test_runner.tscn` 已建（GUT 节点）+ `res://addons/gut/gut.gd` 现已 vendored（C-E 已解决） | ✅ |
 | **B4** 注入式日期 | `revive_caps.gd:11` + `test_revive_caps.gd:22-24` | ✅ |
 | **B5** 端到端复活集成测试 | `tests/test_revive_integration.gd`：`test_end_to_end_revive_increments_and_persists`（断言 `_per_run_used==1`/daily 持久化==1/phase==RUNNING/无敌帧）+ `test_revive_declined_does_not_consume_slot`（enabled=false 停留 RESULT、不消耗额度）；mock `show_rewarded` 同步回调使 `_on_hit()` 内整条链路同步完成，断言合法 | ✅ |
 
@@ -71,11 +71,11 @@
 
 | ID | 项 | 性质 | 建议 |
 |---|---|---|---|
-| **C-A** | 无 Godot 真机解析/编译确认（原 B1） | 验证 | CI `godot --headless --path .` 实跑一次，作为最终闸门 |
-| **C-B** | 引擎版本 / GUT 版本未钉（`project.godot:3` 注释、缺 `CLAUDE.md`/`VERSION.md`） | 环境 | 补 `docs/engine-reference/godot/VERSION.md` + 钉 GUT 9.x 提交 |
+| **C-A** | 无 Godot 真机解析/编译确认（原 B1） | 验证 | ✅ **PASS** — CI run `36180378277`：`godot --headless --path .` 实跑 S1–S12（含硬门禁 S9/S10）全绿，GUT `-gexit` 退出 0 |
+| **C-B** | 引擎版本 / GUT 版本未钉（`project.godot:3` 注释、缺 `CLAUDE.md`/`VERSION.md`） | 环境 | ✅ **PASS** — `docs/engine-reference/godot/VERSION.md` 已钉 Godot 4.3 + GUT 9.4.0；CI 钉版 `barichello/godot-ci:4.3` |
 | **C-C** | 手感/跳·二段跳·滑铲·碰撞致死（原 B6） | 验证 | 实机 playtest，校准 `Tuning` 跳参/间距 |
 | **C-D** | 小程序横滑返回冲突（`input_manager.gd:4` 已记） | 平台 | 容器层处理，非本切片阻塞 |
-| **C-E** | **GUT addon 未安装**（真正阻塞跑测试） | 环境 | `git submodule add` 或拷贝 GUT 9.x 至 `addons/gut/` |
+| **C-E** | **GUT addon 未安装**（真正阻塞跑测试） | 环境 | ✅ **PASS** — GUT 9.4.0 已 vendored 至 `addons/gut/`（134 文件），`tests/README.md` 钉版安装手册 |
 | **C-F** | 性能预算（draw call≤50 / GC<0.5ms，原 B9） | 验证 | CI `perf` job 采样 |
 | nit-1 | `obstacle_spawner.gd:12` `SPAWN_INTERVAL:=18.0` 硬编码，未引用 `Tuning.intervalBase`（值一致但非单源） | 一致性 | 改为 `Tuning.intervalBase` 或删注释去歧义 |
 | nit-2 | `combo_changed` 双 emit（`combo_scoring.gd:32` + `game.gd:108`） | 冗余 | 可单源化，非 bug |
@@ -85,10 +85,10 @@
 
 ## 进 Phase 6/7 前的「最终门控清单」
 
-1. **安装 GUT 9.x** → `addons/gut/`（C-E，否则 S1–S12 无法运行）。
-2. **CI headless 跑 S1–S12**，重点盯 **S9 / S10 硬门禁** 全绿（C-A）。
-3. **实机 playtest**：三轨切轨手感、过弯锁中轨不误杀、跳/滑/二段跳、复活无敌帧、HUD 文案（C-C）。
-4. **钉版本**：Godot 小版本 + GUT 9.x 提交哈希（C-B）。
-5. 可选清理 nit-1~3。
+1. ✅ **安装 GUT 9.x** → `addons/gut/`（C-E，已 vendored 9.4.0，S1–S12 可运行）。
+2. ✅ **CI headless 跑 S1–S12**，重点盯 **S9 / S10 硬门禁** 全绿（C-A，run `36180378277` PASS）。
+3. ⏳ **实机 playtest**：三轨切轨手感、过弯锁中轨不误杀、跳/滑/二段跳、复活无敌帧、HUD 文案（C-C，需真机）。
+4. ✅ **钉版本**：Godot 4.3 + GUT 9.4.0（C-B，见 `docs/engine-reference/godot/VERSION.md`）。
+5. ⏳ 可选清理 nit-1~3。
 
-> 代码侧（②/③/④）已具备进下一阶段条件；上述 1–4 为发布前必过的硬闸门。
+> 代码侧（②/③/④）+ 构建侧（C-A/C-B/C-E）已闭环；仅剩 **C-C 真机 playtest** 与 **C-F 性能预算** 需真机/真 GPU 验证（沙箱无法替代）。本批次已开 Draft PR `fix/sprint1-vertical-slice → main` 供 diff 级评审。
